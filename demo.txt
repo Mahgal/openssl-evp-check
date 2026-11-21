@@ -1,0 +1,19 @@
+CVE-2026-121481 — OpenSSL EVP_EncodeBlock() integer overflow
+openssl binary (fixture): OpenSSL 4.1.0 12 Aug 2026
+  Verdict: VULNERABLE
+  CVE-2026-121481: OpenSSL 4.1.0 is in the affected range; fixed in 4.1.1 (scheduled 2026-12-01, not yet released)
+distro package (fixture): 4.0.3-1ubuntu1
+  Verdict: VULNERABLE
+  CVE-2026-121481: OpenSSL 4.0.3 is in the affected range; fixed in 4.0.4 (scheduled 2026-12-01, not yet released)
+Node.js bundled (fixture): 3.5.9
+  Verdict: NOT_AFFECTED
+  OpenSSL 3.5.9 is not affected per the CVE record (3.x and 1.1.1 are out of scope)
+Python ssl (fixture): OpenSSL 3.0.16 30 Jan 2024
+  Verdict: NOT_AFFECTED
+  OpenSSL 3.0.16 is not affected per the CVE record (3.x and 1.1.1 are out of scope)
+future fixed build (fixture): OpenSSL 4.0.4 1 Dec 2026
+  Verdict: PATCHED
+  OpenSSL 4.0.4 includes the fix for CVE-2026-121481
+
+Result: 2 source(s) VULNERABLE. No fixed release exists yet — 4.0.4 / 4.1.1 are scheduled 2026-12-01 (fix: openssl/openssl#33652).
+Mitigation until then: cap EVP_EncodeBlock input in your own code (e.g. 64 MiB per call) and upgrade to 4.0.4 / 4.1.1 when released.
