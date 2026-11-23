@@ -137,6 +137,49 @@ class TestExplain(unittest.TestCase):
         self.assertIn("not affected", text)
 
 
+class TestRetrofit20261123(unittest.TestCase):
+    """Added 2026-11-23 retrofit: previously untested branches."""
+
+    def test_explain_patched(self):
+        text = oec.explain((4, 0, 4), oec.PATCHED)
+        self.assertIn("includes the fix", text)
+        self.assertIn("4.0.4", text)
+
+    def test_format_text_all_unknown_with_raw(self):
+        results = [{"source": "distro package", "raw": "garbage",
+                    "version": None, "verdict": oec.UNKNOWN}]
+        self.assertIn("could not be parsed",
+                      oec.format_text(results))
+
+    def test_format_text_all_unknown_no_raw(self):
+        results = [{"source": "openssl binary", "raw": None,
+                    "version": None, "verdict": oec.UNKNOWN}]
+        self.assertIn("no OpenSSL source could be detected",
+                      oec.format_text(results))
+
+    def test_format_text_clean_result_line(self):
+        results = [{"source": "Python ssl", "raw": "OpenSSL 3.0.16 30 Jan 2024",
+                    "version": "3.0.16", "verdict": oec.NOT_AFFECTED}]
+        self.assertIn("Result: clean", oec.format_text(results))
+
+    def test_future_major_is_not_affected(self):
+        # A future OpenSSL 5.x ships with the fix already in, per the
+        # CVE record's scope (only 4.0.x and 4.1.0 are affected).
+        self.assertEqual(oec.judge((5, 0, 0)), oec.NOT_AFFECTED)
+        self.assertEqual(oec.parse_version("OpenSSL 4.0.4 1 Dec 2026"),
+                         (4, 0, 4))
+
+    def test_detect_distro_package_dpkg(self):
+        import unittest.mock as mock
+        with mock.patch.object(oec.shutil, "which",
+                               side_effect=lambda c: "/usr/bin/dpkg-query"
+                               if c == "dpkg-query" else None):
+            with mock.patch.object(oec, "_run",
+                                   return_value="4.0.3-1ubuntu1"):
+                self.assertEqual(oec.detect_distro_package(),
+                                 "4.0.3-1ubuntu1")
+
+
 class TestCLI(unittest.TestCase):
     def test_demo_exit_1_and_all_verdicts(self):
         proc = run_cli("--demo")

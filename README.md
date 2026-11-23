@@ -2,13 +2,15 @@
 
 ![demo](demo.png)
 
-**Find out in 0.18 seconds whether any OpenSSL on your box is exposed to CVE-2026-121481. One command, no installs, no network calls.**
+**Find out in 0.27 seconds whether any OpenSSL on your box is exposed to CVE-2026-121481. One command, no installs, no network calls.**
 
-A stdlib-only Python CLI that reads every OpenSSL on the machine, the system binary, the distro package, the copy Node.js bundles, and the copy Python links, then gives each one a verdict: VULNERABLE, PATCHED, or NOT_AFFECTED. A real check takes a median **0.183 s** (7 live runs, measured 2026-11-21 on this machine). It runs offline and contains no exploit code. It only reads version strings.
+A stdlib-only Python CLI that reads every OpenSSL on the machine, the system binary, the distro package, the copy Node.js bundles, and the copy Python links, then gives each one a verdict: VULNERABLE, PATCHED, or NOT_AFFECTED. A real check takes a median **0.273 s** (7 live runs, measured 2026-11-23 on this machine); the labelled demo takes **0.097 s**. It runs offline and contains no exploit code. It only reads version strings.
 
 ## Why now
 
 On **2026-11-18**, the OpenSSL project published **CVE-2026-121481**: an integer overflow in `EVP_EncodeBlock()`, the one-shot base64 encoder. Feed it an input length near INT_MAX, about 1.6 GB in a single call, and the encoded-output-size calculation overflows. The encoder then writes past the caller-supplied buffer, a heap buffer overflow. The fix is public pull request [#33652](https://github.com/openssl/openssl/pull/33652).
+
+**Status 2026-11-23: the fixed releases are still 8 days out.** 4.0.4 and 4.1.1 are scheduled for **2026-12-01** and no fixed release exists yet — so until then, "upgrade to the fixed version" is advice about a version you cannot download, and checking what you actually have is the only concrete step.
 
 What the CVE record actually says:
 
@@ -41,7 +43,7 @@ python3 openssl_evp_check.py --json                      # machine-readable outp
 python3 openssl_evp_check.py --fail-on never             # report only, always exit 0
 ```
 
-Verified from a clean copy (fresh checkout in `/tmp`, 2026-11-21): the live check runs, `--demo` reproduces byte-for-byte, and the full test suite passes, 44/44, exit 0.
+Verified from a clean copy (fresh checkout in `/tmp`, 2026-11-21): the live check runs, `--demo` reproduces byte-for-byte, and the full test suite passes, 44/44, exit 0. Re-verified on retrofit 2026-11-23: `--demo` is still byte-identical to the 2026-11-21 capture (sha256 `12fd954b…`), and the suite is now 50/50, exit 0.
 
 ## Example output
 
@@ -97,7 +99,7 @@ Version parsing handles distro suffixes (`4.0.3-1ubuntu1`, `4.0.3-1.fc45`, `4.1.
 python3 tests/run_tests.py
 ```
 
-44 tests, stdlib `unittest` only, no network. They cover every verdict boundary (4.0.3 vulnerable, 4.0.4 patched, 4.1.0 vulnerable, 4.1.1 patched, 3.5.9 and 1.1.1 not affected), distro-suffix and letter-suffix parsing, malformed versions mapping to UNKNOWN without crashing, the `--json` structure, all four exit codes, `--demo` determinism, and a no-OpenSSL environment degrading to exit 3.
+50 tests, stdlib `unittest` only, no network. They cover every verdict boundary (4.0.3 vulnerable, 4.0.4 patched, 4.1.0 vulnerable, 4.1.1 patched, 3.5.9 and 1.1.1 not affected), distro-suffix and letter-suffix parsing, malformed versions mapping to UNKNOWN without crashing, the `--json` structure, all four exit codes, `--demo` determinism, and a no-OpenSSL environment degrading to exit 3. The 2026-11-23 retrofit added 6 tests for previously untested branches: `explain()` on PATCHED, the all-UNKNOWN `format_text` branches (with and without a raw version string), the clean result line, a future OpenSSL 5.x verdict, and the dpkg-query distro detection path.
 
 ## License
 
